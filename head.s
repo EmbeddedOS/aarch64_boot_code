@@ -7,6 +7,7 @@ _start:
 
     /* Check current EL.*/
     MRS x1, CurrentEL
+    
 
     LDR x1, =vector_table_el1
     MSR VBAR_EL1, x1
