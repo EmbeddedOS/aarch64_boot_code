@@ -1,10 +1,13 @@
-CROSS_COMPILE=../toolchain/bin/aarch64-none-linux-gnu-
+CROSS_COMPILE=../linux/toolchain/bin/aarch64-none-linux-gnu-
 CC=$(CROSS_COMPILE)gcc
 LD=$(CROSS_COMPILE)ld
 AS=$(CROSS_COMPILE)as
 OBJCOPY=$(CROSS_COMPILE)objcopy
 all:
 	$(CC) -c main.c -o main.o
-	$(AS) -c startup.s -o startup.o
-	$(LD) -e _start -T linker.ld startup.o main.o -o boot.elf
+	$(AS) -c head.s -o head.o
+	$(AS) -c entry.s -o entry.o
+	$(LD) -e _start -T linker.ld head.o main.o entry.o -o boot.elf
 	$(OBJCOPY) -O binary boot.elf boot.bin
+clean:
+	rm -rf *.o *.bin *.elf
