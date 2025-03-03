@@ -4,69 +4,69 @@
 
 // Vector tables must be placed at a 2KB-aligned address.
 
-.balign 0x800
+.balign 2048
 vector_table_el1:
 // Exception from current EL while using SP_EL0.
 curr_el_sp0_sync:
-	bl sync_handler
+    b .
 .balign 0x80
 curr_el_sp0_irq:
-	b .
+    b .
 .balign 0x80
 curr_el_sp0_fiq:
-	b .
+    b .
 .balign 0x80
 curr_el_sp0_serror:
-	b .
+    b .
 .balign 0x80
 // Exception from current EL while using SP_EL1.
 curr_el_sp1_sync:
-	bl sync_handler
+    b .
 .balign 0x80
 curr_el_sp1_irq:
-	b .
+    b .
 .balign 0x80
 curr_el_sp1_fiq:
-	b .
+    b .
 .balign 0x80
 curr_el_sp1_serror:
-	b .
+    b .
 .balign 0x80
 
 // Exception from a lower EL and at least one lower EL is AArch64.
 lower_el_aarch64_sync:
-	bl sync_handler
+    bl sync_handler
 .balign 0x80
 lower_el_aarch64_irq:
-	b .
+    b .
 .balign 0x80
 lower_el_aarch64_fiq:
-	b .
+    b .
 .balign 0x80
 lower_el_aarch64_serror:
-	b .
+    b .
 .balign 0x80
 
 // Exception from a lower EL and all lower ELs are AArch32.
 lower_el_aarch32_sync:
-	b .
+    b .
 .balign 0x80
 lower_el_aarch32_irq:
-	b .
+    b .
 .balign 0x80
 lower_el_aarch32_fiq:
-	b .
+    b .
 .balign 0x80
 lower_el_aarch32_serror:
-	b .
-.balign 0x80
-
+    b .
 
 sync_handler:
-    mov x0, 0x09000000
-    mov x1, 'C'
-    str x1, [x0]
-	stp x20, x21, [sp, #-16]!
+    mov x14, 0x09000000
+    mov x15, 'A'
+    str x15, [x14]
+    bl svc_handler
+    eret
+    stp x20, x21, [sp, #-16]!
 
     mov x21, sp
     sub x20, sp, #192
@@ -88,8 +88,8 @@ sync_handler:
     stp x18, x29, [sp, #144]
     stp x30, x1, [sp, #160]
 
-    mrs x0, ESR_EL2
-    mrs x1, FAR_EL2
+    mrs x0, ESR_EL1
+    mrs x1, FAR_EL1
     stp x0, x1, [sp, #176]
 
     mov x0, sp
@@ -110,3 +110,4 @@ sync_handler:
     ldp x0, x1, [x1, #0]
 
     eret
+
