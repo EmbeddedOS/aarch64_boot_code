@@ -120,8 +120,6 @@ in_el1:
     ldr x1, =vector_table_el1       /* Load EL1 vector table.                 */ 
     msr vbar_el1, x1
 
-    msr hcr_el2, X0
-
     mov x0, #0b111100000    /* DAIF[8:5]=0000 M[4:0]=00000 EL0 state.             */
     msr spsr_el1, x0
 
@@ -133,6 +131,7 @@ in_el1:
 
 in_el0:
     qemu_print in_el0_message, in_el0_message_len
+    svc 1
     bl main
 
     b .
