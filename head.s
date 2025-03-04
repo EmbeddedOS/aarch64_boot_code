@@ -7,9 +7,9 @@
  *          AArch64 `virt` machine.
  */
 .macro qemu_print reg, len
-    str x10, [sp, #-64]!
-    str x11, [sp, #-64]!
-    str x12, [sp, #-64]!
+    // str x10, [sp, #64]!
+    // str x11, [sp, #128]!
+    // str x12, [sp, #192]!
 
     mov x10, #0x09000000
     mov x11, #\len
@@ -23,9 +23,9 @@
     add x12, x12, #1
     b 1b
 2:
-    ldr   x12, [sp], #64
-    ldr   x11, [sp], #64
-    ldr   x10, [sp], #64
+    // ldr   x12, [sp], #64
+    // ldr   x11, [sp], #128
+    // ldr   x10, [sp], #192
 .endm
 
 _start:
@@ -51,40 +51,87 @@ _start:
     b .
 
 in_el3:
+    /* Secure monitor code. */
     qemu_print in_el3_message, in_el3_message_len
-    /* TODO: handle secure monitor layer. */
-    b .
+
+    ldr x1, =vector_table_el3       /* Load EL3 vector table.                 */ 
+    msr vbar_el3, x1
+
+    /* Set up Execution state before return to EL2. */
+    msr sctlr_el2, xzr      /* Clear System Control Rergister.                */
+    msr hcr_el2, xzr        /* Clear the Hypervisor Control Register.         */
+
+    mrs x0, scr_el3         /* Configure Secure Control Register:             */
+    orr x0, x0, #(1<<10)    /* EL2 exception state is AArch64.                */
+    orr x0, x0, #(1<<0)     /* Non Secure state for EL1.                      */
+    orr x0, x0, #(1<<1)
+    orr x0, x0, #(1<<2)
+    orr x0, x0, #(1<<3)
+    and x0, x0, #(~(1<<62))
+    msr scr_el3, x0
+
+    mrs x0, sctlr_el2
+    orr x0, x0, #(1<<25)
+    orr x0, x0, #(1<<12)
+    orr x0, x0, #(1<<1)
+    orr x0, x0, #(1<<2)
+    orr x0, x0, #(1<<3)
+    msr sctlr_el2, x0
+
+
+    mov x0, #0b000001001    /* DAIF[8:5]=0000 M[4:0]=01001 EL0 state:         */
+    msr spsr_el3, x0        /* Select EL2 with SP_EL2.                        */
+
+    ldr x30, =el2_stack_top
+    msr sp_el2, x30
+
+    adr x0, in_el2
+    msr elr_el3, x0
+    eret
 
 in_el2:
     qemu_print in_el2_message, in_el2_message_len
-    /* TODO: handle hypervisor layer. */
-    MSR SCTLR_EL1, XZR 
-    MRS X0, HCR_EL2
-    ORR X0, X0, #(1<<31) // RW=1 EL1 Execution state is AArch64.
-    MSR HCR_EL2, X0
-    MOV X0, #0b00101 // DAIF=0000
-    MSR SPSR_EL2, X0 // M[4:0]=00101 EL1h must match HCR_EL2.RW.
-    ADR X0, in_el1 // el1_entry points to the first instruction of
-    MSR ELR_EL2, X0 // EL1 code.
-    ERET
+
+    ldr x1, =vector_table_el2       /* Load EL2 vector table.                 */ 
+    msr vbar_el2, x1
+
+    /* Set up Execution state before return to EL1. */
+    msr sctlr_el1, xzr      /* Clear System Control Register.                 */
+
+    mrs x0, hcr_el2         /* Set bit 31th: RW the Execution state for EL1.  */
+    orr x0, x0, #(1<<31)
+    msr hcr_el2, x0
+
+    mov x0, #0b111100101    /* DAIF[8:5]=0000 M[4:0]=00101 The state indicate */
+    msr spsr_el2, X0        /* EL1 with SP_EL1.                               */
+
+    ldr x30, =el1_stack_top
+    msr sp_el1, x30
+
+    adr x0, in_el1
+    msr elr_el2, x0
+
+    eret
 
 in_el1:
     qemu_print in_el1_message, in_el1_message_len
 
-    /* Load vector table. */ 
-    ldr x1, =vector_table_el1
-    msr VBAR_EL1, x1
+    /* Set up Execution state before return to EL0. */
+    ldr x1, =vector_table_el1       /* Load EL1 vector table.                 */ 
+    msr vbar_el1, x1
 
-    // Determine the EL0 Execution state.
-    MOV X0, #0b00000 // DAIF=0000 M[4:0]=00000 EL0t.
-    MSR SPSR_EL1, X0
-    ADR x0, in_el0
-    MSR ELR_EL1, X0 // EL0 code.
-    ERET
+    msr hcr_el2, X0
+
+    mov x0, #0b111100000    /* DAIF[8:5]=0000 M[4:0]=00000 EL0 state.             */
+    msr spsr_el1, x0
+
+    ldr x30, =el0_stack_top
+    msr sp_el0, x30
+
+    adr x0, in_el0
+    msr elr_el1, x0
 
 in_el0:
-    ldr x30, =stack_top
-    mov sp, x30
     qemu_print in_el0_message, in_el0_message_len
     bl main
 
