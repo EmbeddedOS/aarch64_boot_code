@@ -4,6 +4,7 @@ SECTIONS
  .start : {head.o (.text)}
  .text : { *(.text) }
  .data : { *(.data) }
+ _end_copy_image = .;
  .bss : { *(.bss COMMON) }
  . = ALIGN(8);
  . = . + 0x100;
@@ -15,4 +16,5 @@ SECTIONS
  . = . + 0x1000;
  el0_stack_top = .;
  stack_top = .;
+ . = ALIGN(8);
 }
