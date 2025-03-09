@@ -81,6 +81,8 @@ _start:
 
 in_el3:
     /* Secure monitor code. */
+    ldr x1, =el3_stack_top
+    mov sp, x1
     qemu_print in_el3_message, in_el3_message_len
 
     ldr x1, =vector_table_el3       /* Load EL3 vector table.                 */ 
@@ -98,14 +100,13 @@ in_el3:
     mov x0, #0b000001001    /* DAIF[8:5]=0000 M[4:0]=01001 EL0 state:         */
     msr spsr_el3, x0        /* Select EL2 with SP_EL2.                        */
 
-    ldr x30, =el2_stack_top
-    msr sp_el2, x30
-
     adr x0, in_el2
     msr elr_el3, x0
     eret
 
 in_el2:
+    ldr x1, =el2_stack_top
+    mov sp, x1
     qemu_print in_el2_message, in_el2_message_len
 
     ldr x1, =vector_table_el2       /* Load EL2 vector table.                 */ 
@@ -121,15 +122,14 @@ in_el2:
     mov x0, #0b000000101    /* DAIF[8:5]=0000 M[4:0]=00101 The state indicate */
     msr spsr_el2, X0        /* EL1 with SP_EL1.                               */
 
-    ldr x30, =el1_stack_top
-    msr sp_el1, x30
-
     adr x0, in_el1
     msr elr_el2, x0
 
     eret
 
 in_el1:
+    ldr x1, =el1_stack_top
+    mov sp, x1
     qemu_print in_el1_message, in_el1_message_len
 
     /* Set up Execution state before return to EL0. */
@@ -139,17 +139,17 @@ in_el1:
     mov x0, #0b000000000    /* DAIF[8:5]=0000 M[4:0]=00000 EL0 state.         */
     msr spsr_el1, x0
 
-    ldr x30, =el0_stack_top
-    msr sp_el0, x30
-
     adr x0, in_el0
     msr elr_el1, x0
     eret
 
 in_el0:
+    ldr x1, =el0_stack_top
+    mov sp, x1
     qemu_print in_el0_message, in_el0_message_len
     bl el0_main
     b .
+
 
 hello_message: .asciz "Aarch64 bare metal code!\n"
 hello_message_len = . - hello_message
