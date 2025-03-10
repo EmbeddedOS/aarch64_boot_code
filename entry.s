@@ -198,7 +198,9 @@ el3_lower_el_aarch32_serror:
 
 el1_lower_el_aarch64_sync_handler:
     save_trap_frame el1
-    bl el1_lower_el_aarch64_sync_handler_c
+    mov x0, sp
+    mrs x1, esr_el1
+    bl el1_sync_handler
     restore_trap_frame el1
     eret
 
