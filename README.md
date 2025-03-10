@@ -54,11 +54,24 @@ qemu-system-aarch64 -M virt,virtualization=on,secure=on -cpu cortex-a57 -nograph
 - Start from EL2 as a kernel:
 
 ```bash
-qemu-system-aarch64 -M virt,virtualization=on,secure=off -cpu cortex-a57 -nographic -bios boot.elf -D log.txt -d int
+qemu-system-aarch64 -M virt,virtualization=on,secure=off -cpu cortex-a57 -nographic -kernel boot.elf -D log.txt -d int
 ```
 
 - Start from EL1 as a kernel:
 
 ```bash
-qemu-system-aarch64 -M virt,virtualization=off,secure=off -cpu cortex-a57 -nographic -bios boot.elf -D log.txt -d int
+qemu-system-aarch64 -M virt,virtualization=off,secure=off -cpu cortex-a57 -nographic -kernel boot.elf -D log.txt -d int
+```
+
+Sample result:
+
+```bash
+$ qemu-system-aarch64 -M virt,virtualization=on,secure=off -cpu cortex-a57 -nographic -bios boot.bin -D log.txt -d int
+Aarch64 bare metal code!
+In EL2!
+In EL1!
+In EL0!
+Enter el0_main!
+System call return a correct result.
+Exit el0_main!
 ```
