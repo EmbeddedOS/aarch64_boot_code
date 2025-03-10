@@ -89,7 +89,7 @@ in_el3:
     msr vbar_el3, x1
 
     /* Set up Execution state before return to EL2. */
-    msr sctlr_el2, xzr      /* Clear System Control Rergister.                */
+    msr sctlr_el2, xzr      /* Clear System Control Register.                 */
     msr hcr_el2, xzr        /* Clear the Hypervisor Control Register.         */
 
     mrs x0, scr_el3         /* Configure Secure Control Register:             */
